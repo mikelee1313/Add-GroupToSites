@@ -24,7 +24,7 @@
 
 .NOTES
     File Name      : Add-GroupToSites.ps1
-    Author         : Mike Lee / VijayKumar
+    Author         : Mike Lee / Vijay Kumar
     Created On     : 3/11/25
 
 .EXAMPLE
