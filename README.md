@@ -15,7 +15,11 @@ To execute this script you will need the PNP module installed.
 
 
 AdminURL = "https://contoso-admin.sharepoint.com/"
+
 groupname = "c:0t.c|tenant|ed046cb9-86bc-47e7-95f5-912cfe343fc2"
+
 $appID = "1e488dc4-1977-48ef-8d4d-9856f4e04536"
+
 $thumbprint = "5EAD7303A5C7E27DB4245878AD554642940BA082"
+
 $tenant = "9cfc42cb-51da-4055-87e9-b20a170b6ba3"
