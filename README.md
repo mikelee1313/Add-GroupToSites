@@ -2,7 +2,7 @@ What does this script do?
 
 This script connects to the SharePoint Admin center and iterates through all SharePoint sites in the tenant (excluding OneDrive sites), adding a specified Microsoft 365 group as a site collection administrator if it doesn't already exist in that role. The script includes throttling management and logging functionality.
 
-The log will default the uses temp folder %temp%
+The output log will write to logged in users temp location, which equates to %temp% .
 
 Example of output log:
 
