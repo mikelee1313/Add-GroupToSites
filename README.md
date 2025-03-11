@@ -11,9 +11,7 @@ The output log will write to logged in users temp location, which equates to %te
 
 **To execute this script you will need the PNP module installed.**
 
-![image](https://github.com/user-attachments/assets/1d5f91e6-c192-41f7-bd7f-514f2a06c630)
-
-https://pnp.github.io/powershell
+![image](https://github.com/user-attachments/assets/1d5f91e6-c192-41f7-bd7f-514f2a06c630) https://pnp.github.io/powershell
 
 
 **Ensure to modify these settings to match your Tenant:**
