@@ -8,8 +8,10 @@ The output log will write to logged in users temp location, which equates to %te
 
 ![image](https://github.com/user-attachments/assets/eb2901f0-3bd5-4c16-b69e-96d8d4433e0e)
 
-*
-*To execute this script you will need the PNP module installed.**
+
+**To execute this script you will need the PNP module installed.**
+
+![image](https://github.com/user-attachments/assets/1d5f91e6-c192-41f7-bd7f-514f2a06c630)
 
 https://pnp.github.io/powershell
 
