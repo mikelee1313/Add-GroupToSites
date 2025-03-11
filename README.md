@@ -8,7 +8,10 @@ The output log will write to logged in users temp location, which equates to %te
 
 ![image](https://github.com/user-attachments/assets/eb2901f0-3bd5-4c16-b69e-96d8d4433e0e)
 
-To execute this script you will need the PNP module installed.
+*
+*To execute this script you will need the PNP module installed.**
+
+https://pnp.github.io/powershell
 
 
 **Ensure to modify these settings to match your Tenant:**
