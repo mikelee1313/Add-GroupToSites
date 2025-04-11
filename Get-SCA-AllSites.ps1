@@ -25,7 +25,7 @@
     File Name      : Get-SCA-AllSites4.ps1
     Prerequisite   : PnP PowerShell module installed
     Author         : Mike Lee | Vijay Kumar
-    Date           : 4/4/2025
+    Date           : 4/11/2025
 
 .EXAMPLE
     .\Get-SCA-AllSites.ps1
@@ -36,10 +36,11 @@
 #>
 
 # Set Variables
-$tenantname = "Contoso" #This is your tenant name
+$tenantname = "m365cpi13246019" #This is your tenant name
 $appID = "1e488dc4-1977-48ef-8d4d-9856f4e04536"  #This is your Entra App ID
 $thumbprint = "5EAD7303A5C7E27DB4245878AD554642940BA082" #This is certificate thumbprint
 $tenant = "9cfc42cb-51da-4055-87e9-b20a170b6ba3" #This is your Tenant ID
+
 
 #Define Log path
 $startime = Get-Date -Format "yyyyMMdd_HHmmss"
@@ -98,8 +99,8 @@ function Invoke-WithRetry {
 # Get all site collections
 $sites = Invoke-WithRetry { Get-PnPTenantSite | Where-Object { $_.Url -notlike "*-my.sharepoint.com*" } }
 
-# Prepare an array to store results
-$results = @()
+# Create a hashtable to store unique site/group combinations
+$resultsHash = @{}
 
 foreach ($site in $sites) {
     # Connect to each site collection
@@ -112,29 +113,48 @@ foreach ($site in $sites) {
 
     foreach ($admin in $admins) {
         if ($admin.PrincipalType -eq "User") {
-            # Add user admin details directly
-            $results += [PSCustomObject]@{
+            # Add user admin details directly - these are still individual entries
+            $key = "$($site.Url)_User_$($admin.Email)"
+            $resultsHash[$key] = [PSCustomObject]@{
                 SiteUrl       = $site.Url
                 Title         = $admin.Title
                 Email         = $admin.Email
-                LoginName     = $admin.LoginName
+                Members       = $admin.Title
+                MemberEmails  = $admin.Email
                 PrincipalType = "User"
             }
         }
         elseif ($admin.PrincipalType -eq "SecurityGroup" -and $admin.Title.ToLower().Contains("owners")) {
             try {
-                # Retrieve group members explicitly
+                # Create a key for this site and group combination
+                $key = "$($site.Url)_SPGroup_$($admin.Title)"
+                
+                # Initialize with empty members if this is a new entry
+                if (-not $resultsHash.ContainsKey($key)) {
+                    $resultsHash[$key] = [PSCustomObject]@{
+                        SiteUrl       = $site.Url
+                        Title         = $admin.Title
+                        Email         = ""
+                        Members       = ""
+                        MemberEmails  = ""
+                        PrincipalType = "SharePoint Owners Group"
+                    }
+                }
+                
                 try {
                     $groupMembers = Invoke-WithRetry { Get-PnPGroupMember -Identity $admin.Title }
+                    
+                    $memberNames = @()
+                    $memberEmails = @()
+                    
                     foreach ($member in $groupMembers) {
-                        $results += [PSCustomObject]@{
-                            SiteUrl       = $site.Url
-                            Title         = $member.Title
-                            Email         = $member.Email
-                            LoginName     = $member.LoginName
-                            PrincipalType = "SharePoint Owners Group Member"
-                        }
+                        $memberNames += $member.Title
+                        $memberEmails += $member.Email
                     }
+                    
+                    # Update the entry with consolidated members
+                    $resultsHash[$key].Members = $memberNames -join "; "
+                    $resultsHash[$key].MemberEmails = $memberEmails -join "; "
                 }
                 catch {
                     Write-Log "Group '$($admin.Title)' in site '$($site.Url)' is deleted or inaccessible: $_" -level "WARNING"
@@ -147,7 +167,21 @@ foreach ($site in $sites) {
         elseif ($admin.PrincipalType -eq "SecurityGroup" -and $admin.Title.ToLower() -notlike '*owners*') {
             # Check if this is an Entra ID (Azure AD) group or a SharePoint group
             if ($admin.LoginName -like "c:0t.c|tenant|*") {
-                # This is an Entra ID group
+                # Create a key for this site and group combination
+                $key = "$($site.Url)_EntraGroup_$($admin.Title)"
+                
+                # Initialize with empty members if this is a new entry
+                if (-not $resultsHash.ContainsKey($key)) {
+                    $resultsHash[$key] = [PSCustomObject]@{
+                        SiteUrl       = $site.Url
+                        Title         = $admin.Title
+                        Email         = ""
+                        Members       = ""
+                        MemberEmails  = ""
+                        PrincipalType = "Entra ID Group"
+                    }
+                }
+                
                 try {
                     # Extract the group ID from the login name
                     $entraGroupId = $admin.LoginName.Replace("c:0t.c|tenant|", "")
@@ -155,16 +189,17 @@ foreach ($site in $sites) {
                     # Get group members using Microsoft Graph
                     $entraGroupMembers = Invoke-WithRetry { Get-PnPMicrosoft365GroupMembers -Identity $entraGroupId }
                     
+                    $memberNames = @()
+                    $memberEmails = @()
+                    
                     foreach ($member in $entraGroupMembers) {
-                        $results += [PSCustomObject]@{
-                            SiteUrl       = $site.Url
-                            Title         = $admin.Title
-                            Member        = $member.DisplayName
-                            Email         = $member.UserPrincipalName
-                            LoginName     = $member.UserPrincipalName
-                            PrincipalType = "Entra ID Group Member"
-                        }
+                        $memberNames += $member.DisplayName
+                        $memberEmails += $member.Email
                     }
+                    
+                    # Update the entry with consolidated members
+                    $resultsHash[$key].Members = $memberNames -join "; "
+                    $resultsHash[$key].MemberEmails = $memberEmails -join "; "
                 }
                 catch {
                     Write-Log "Failed to retrieve members for Entra ID group '$($admin.Title)' in site '$($site.Url)': $_" -level "WARNING"
@@ -172,11 +207,14 @@ foreach ($site in $sites) {
             }
         }
         else {
-            # Add user admin details directly
-            $results += [PSCustomObject]@{
+            # Add SharePoint group details
+            $key = "$($site.Url)_SPGroup_$($admin.Title)"
+            $resultsHash[$key] = [PSCustomObject]@{
                 SiteUrl       = $site.Url
                 Title         = $admin.Title
                 Email         = $admin.Email
+                Members       = $admin.Title
+                MemberEmails  = $admin.Email
                 LoginName     = $admin.LoginName
                 PrincipalType = "SharePoint Group"
             }
@@ -184,8 +222,11 @@ foreach ($site in $sites) {
     }
 }
 
+# Convert hashtable to array for CSV export
+$consolidatedResults = $resultsHash.Values
+
 # Export results to CSV
-$results | Export-Csv -Path $ouputpath -NoTypeInformation -Encoding UTF8
+$consolidatedResults | Export-Csv -Path $ouputpath -NoTypeInformation -Encoding UTF8
 Write-Host "Operations completed successfully and results exported to $ouputpath" -ForegroundColor Yellow
-write-host "Check Log file any issues: $logFilePath" -ForegroundColor Cyan
+Write-Host "Check Log file any issues: $logFilePath" -ForegroundColor Cyan
 Write-Log "Operations completed successfully and results exported to $ouputpath" -level "INFO"
