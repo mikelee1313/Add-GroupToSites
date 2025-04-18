@@ -25,7 +25,7 @@
     File Name      : Get-SCA-AllSites-SingeLineOutput.ps1
     Prerequisite   : PnP PowerShell module installed
     Author         : Mike Lee | Vijay Kumar
-    Date           : 4/11/2025
+    Date           : 4/18/2025
 
 .EXAMPLE
     .\ Get-SCA-AllSites-SingeLineOutput.ps1
@@ -146,10 +146,11 @@ foreach ($site in $sites) {
                     $spgroup = Invoke-WithRetry { Get-PnPGroup -Identity $site.Url }
                     if ($spgroup.Title.ToLower().Contains("owners")) {
                         $groupMembers = Invoke-WithRetry { Get-PnPGroupMember -Identity $spgroup.Title }
-        
-                        foreach ($member in $groupMembers) {
-                            $resultsHash[$key].SPGroupAdmins += "$($spgroup.Title): $($member.Title)"
-                            $resultsHash[$key].SPGroupAdminEmails += "$($spgroup.Title): $($member.Email)"
+                        if ($groupMembers.Count -ge 1) {
+                            foreach ($member in $groupMembers) {
+                                $resultsHash[$key].SPGroupAdmins += "$($spgroup.Title): $($member.Title)"
+                                $resultsHash[$key].SPGroupAdminEmails += "$($spgroup.Title): $($member.Email)"
+                            }
                         }
                     }
                 }
