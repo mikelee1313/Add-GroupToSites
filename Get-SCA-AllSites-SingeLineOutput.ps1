@@ -25,7 +25,7 @@
     File Name      : Get-SCA-AllSites-SingeLineOutput.ps1
     Prerequisite   : PnP PowerShell module installed
     Author         : Mike Lee | Vijay Kumar
-    Date           : 4/18/2025
+    Date           : 4/21/2025
 
 .EXAMPLE
     .\ Get-SCA-AllSites-SingeLineOutput.ps1
@@ -146,6 +146,8 @@ foreach ($site in $sites) {
                     $spgroup = Invoke-WithRetry { Get-PnPGroup -Identity $site.Url }
                     if ($spgroup.Title.ToLower().Contains("owners")) {
                         $groupMembers = Invoke-WithRetry { Get-PnPGroupMember -Identity $spgroup.Title }
+                        
+                        #Check if there are members in the group
                         if ($groupMembers.Count -ge 0) {
                             foreach ($member in $groupMembers) {
                                 $resultsHash[$key].SPGroupAdmins += "$($spgroup.Title): $($member.Title)"
@@ -169,9 +171,12 @@ foreach ($site in $sites) {
                     # Get group members using Microsoft Graph
                     $entraGroupMembers = Invoke-WithRetry { Get-PnPMicrosoft365GroupMembers -Identity $entraGroupId }
                     
-                    foreach ($member in $entraGroupMembers) {
-                        $resultsHash[$key].EntraGroupAdmins += "$($admin.Title): $($member.DisplayName)"
-                        $resultsHash[$key].EntraGroupAdminEmails += "$($admin.Title): $($member.Email)"
+                    #Check if there are members in the group
+                    if ($entraGroupMembers.Count -ge 0) {
+                        foreach ($member in $entraGroupMembers) {
+                            $resultsHash[$key].EntraGroupAdmins += "$($admin.Title): $($member.DisplayName)"
+                            $resultsHash[$key].EntraGroupAdminEmails += "$($admin.Title): $($member.Email)"
+                        }
                     }
                 }
                 catch {
