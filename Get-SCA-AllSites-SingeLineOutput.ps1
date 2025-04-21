@@ -146,7 +146,7 @@ foreach ($site in $sites) {
                     $spgroup = Invoke-WithRetry { Get-PnPGroup -Identity $site.Url }
                     if ($spgroup.Title.ToLower().Contains("owners")) {
                         $groupMembers = Invoke-WithRetry { Get-PnPGroupMember -Identity $spgroup.Title }
-                        if ($groupMembers.Count -ge 1) {
+                        if ($groupMembers.Count -ge 0) {
                             foreach ($member in $groupMembers) {
                                 $resultsHash[$key].SPGroupAdmins += "$($spgroup.Title): $($member.Title)"
                                 $resultsHash[$key].SPGroupAdminEmails += "$($spgroup.Title): $($member.Email)"
