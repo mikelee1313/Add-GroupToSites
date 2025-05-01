@@ -25,7 +25,7 @@
     File Name      : Get-SCA-AllSites-SingeLineOutput.ps1
     Prerequisite   : PnP PowerShell module installed
     Author         : Mike Lee | Vijay Kumar
-    Date           : 4/21/2025
+    Date           : 5/1/2025
 
 .EXAMPLE
     .\ Get-SCA-AllSites-SingeLineOutput.ps1
@@ -106,90 +106,102 @@ foreach ($site in $sites) {
     # Connect to each site collection
     Write-Host "Getting Site Collection Admins from: $($site.Url)" -ForegroundColor Green
     Write-Log "Getting Site Collection Admins from: $($site.Url)"
-    Invoke-WithRetry { Connect-PnPOnline -Url $site.Url -ClientId $appID -Thumbprint $thumbprint -Tenant $tenant }
+    
+    try {
+        # Connect to the site collection
+        Connect-PnPOnline -Url $site.Url -ClientId $appID -Thumbprint $thumbprint -Tenant $tenant
 
-    # Initialize arrays for this site if it doesn't exist yet
-    $key = $site.Url
-    if (-not $resultsHash.ContainsKey($key)) {
-        $resultsHash[$key] = [PSCustomObject]@{
-            SiteUrl               = $site.Url
-            DirectAdmins          = @()
-            DirectAdminEmails     = @()
-            SPGroupAdmins         = @()
-            SPGroupAdminEmails    = @()
-            EntraGroupAdmins      = @()
-            EntraGroupAdminEmails = @()
-        }
-    }
+        Invoke-WithRetry { Connect-PnPOnline -Url $site.Url -ClientId $appID -Thumbprint $thumbprint -Tenant $tenant }
 
-    # Get site collection administrators
-    $admins = Invoke-WithRetry { Get-PnPSiteCollectionAdmin }
-
-    foreach ($admin in $admins) {
-        if ($admin.PrincipalType -eq "User") {
-            # Add user admin details
-            $resultsHash[$key].DirectAdmins += $admin.Title
-            $resultsHash[$key].DirectAdminEmails += $admin.Email
-        }
-        elseif ($admin.PrincipalType -eq "SecurityGroup" -and $admin.Title.ToLower().Contains("owners")) {
-            try {
-                $groupMembers = Invoke-WithRetry { Get-PnPGroupMember -Identity $admin.Title }
-                
-                foreach ($member in $groupMembers) {
-                    $resultsHash[$key].SPGroupAdmins += "$($admin.Title): $($member.Title)"
-                    $resultsHash[$key].SPGroupAdminEmails += "$($admin.Title): $($member.Email)"
-                }
+        # Initialize arrays for this site if it doesn't exist yet
+        $key = $site.Url
+        if (-not $resultsHash.ContainsKey($key)) {
+            $resultsHash[$key] = [PSCustomObject]@{
+                SiteUrl               = $site.Url
+                DirectAdmins          = @()
+                DirectAdminEmails     = @()
+                SPGroupAdmins         = @()
+                SPGroupAdminEmails    = @()
+                EntraGroupAdmins      = @()
+                EntraGroupAdminEmails = @()
             }
-            catch {
-                Write-Log "Group '$($admin.Title)' in site '$($site.Url)' is deleted or inaccessible. Trying Fallback: $_" -level "WARNING"
+        }
+
+        # Get site collection administrators
+        $admins = Invoke-WithRetry { Get-PnPSiteCollectionAdmin }
+
+        foreach ($admin in $admins) {
+            if ($admin.PrincipalType -eq "User") {
+                # Add user admin details
+                $resultsHash[$key].DirectAdmins += $admin.Title
+                $resultsHash[$key].DirectAdminEmails += $admin.Email
+            }
+            elseif ($admin.PrincipalType -eq "SecurityGroup" -and $admin.Title.ToLower().Contains("owners")) {
                 try {
-                    $spgroup = Invoke-WithRetry { Get-PnPGroup -Identity $site.Url }
-                    if ($spgroup.Title.ToLower().Contains("owners")) {
-                        $groupMembers = Invoke-WithRetry { Get-PnPGroupMember -Identity $spgroup.Title }
+                    $groupMembers = Invoke-WithRetry { Get-PnPGroupMember -Identity $admin.Title }
+                
+                    foreach ($member in $groupMembers) {
+                        $resultsHash[$key].SPGroupAdmins += "$($admin.Title): $($member.Title)"
+                        $resultsHash[$key].SPGroupAdminEmails += "$($admin.Title): $($member.Email)"
+                    }
+                }
+                catch {
+                    Write-Log "Group '$($admin.Title)' in site '$($site.Url)' is deleted or inaccessible. Trying Fallback: $_" -level "WARNING"
+                    try {
+                        $spgroup = Invoke-WithRetry { Get-PnPGroup -Identity $site.Url }
+                        if ($spgroup.Title.ToLower().Contains("owners")) {
+                            $groupMembers = Invoke-WithRetry { Get-PnPGroupMember -Identity $spgroup.Title }
                         
-                        #Check if there are members in the group
-                        if ($groupMembers.Count -ge 0) {
-                            foreach ($member in $groupMembers) {
-                                $resultsHash[$key].SPGroupAdmins += "$($spgroup.Title): $($member.Title)"
-                                $resultsHash[$key].SPGroupAdminEmails += "$($spgroup.Title): $($member.Email)"
+                            #Check if there are members in the group
+                            if ($groupMembers.Count -ge 0) {
+                                foreach ($member in $groupMembers) {
+                                    $resultsHash[$key].SPGroupAdmins += "$($spgroup.Title): $($member.Title)"
+                                    $resultsHash[$key].SPGroupAdminEmails += "$($spgroup.Title): $($member.Email)"
+                                }
                             }
                         }
                     }
-                }
-                catch {
-                    Write-Log "Failed to retrieve members for group '$($admin.Title)' in site '$($site.Url)': $_" -level "WARNING"
-                }
-            }
-        }
-        elseif ($admin.PrincipalType -eq "SecurityGroup" -and $admin.Title.ToLower() -notlike '*owners*') {
-            # Check if this is an Entra ID (Azure AD) group
-            if ($admin.LoginName -like "c:0t.c|tenant|*") {
-                try {
-                    # Extract the group ID from the login name
-                    $entraGroupId = $admin.LoginName.Replace("c:0t.c|tenant|", "")
-                    
-                    # Get group members using Microsoft Graph
-                    $entraGroupMembers = Invoke-WithRetry { Get-PnPMicrosoft365GroupMembers -Identity $entraGroupId }
-                    
-                    #Check if there are members in the group
-                    if ($entraGroupMembers.Count -ge 0) {
-                        foreach ($member in $entraGroupMembers) {
-                            $resultsHash[$key].EntraGroupAdmins += "$($admin.Title): $($member.DisplayName)"
-                            $resultsHash[$key].EntraGroupAdminEmails += "$($admin.Title): $($member.Email)"
-                        }
+                    catch {
+                        Write-Log "Failed to retrieve members for group '$($admin.Title)' in site '$($site.Url)': $_" -level "WARNING"
                     }
                 }
-                catch {
-                    Write-Log "Failed to retrieve members for Entra ID group '$($admin.Title)' in site '$($site.Url)': $_" -level "WARNING"
+            }
+            elseif ($admin.PrincipalType -eq "SecurityGroup" -and $admin.Title.ToLower() -notlike '*owners*') {
+                # Check if this is an Entra ID (Azure AD) group
+                if ($admin.LoginName -like "c:0t.c|tenant|*") {
+                    try {
+                        # Extract the group ID from the login name
+                        $entraGroupId = $admin.LoginName.Replace("c:0t.c|tenant|", "")
+                    
+                        # Get group members using Microsoft Graph
+                        $entraGroupMembers = Invoke-WithRetry { Get-PnPMicrosoft365GroupMembers -Identity $entraGroupId }
+                    
+                        #Check if there are members in the group
+                        if ($entraGroupMembers.Count -ge 0) {
+                            foreach ($member in $entraGroupMembers) {
+                                $resultsHash[$key].EntraGroupAdmins += "$($admin.Title): $($member.DisplayName)"
+                                $resultsHash[$key].EntraGroupAdminEmails += "$($admin.Title): $($member.Email)"
+                            }
+                        }
+                    }
+                    catch {
+                        Write-Log "Failed to retrieve members for Entra ID group '$($admin.Title)' in site '$($site.Url)': $_" -level "WARNING"
+                    }
+                }
+                else {
+                    # Regular SharePoint group
+                    $resultsHash[$key].SPGroupAdmins += $admin.Title
+                    $resultsHash[$key].SPGroupAdminEmails += $admin.Email
                 }
             }
-            else {
-                # Regular SharePoint group
-                $resultsHash[$key].SPGroupAdmins += $admin.Title
-                $resultsHash[$key].SPGroupAdminEmails += $admin.Email
-            }
         }
+
     }
+    catch {
+        Write-Log "Failed to connect to site '$($site.Url)': $_" -level "ERROR"
+        continue
+    }
+
 }
 
 # Convert hashtable to array and join array fields for CSV export
