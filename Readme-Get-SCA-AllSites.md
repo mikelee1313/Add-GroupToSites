@@ -16,8 +16,8 @@
 
 - **PnP PowerShell Module**: Tested with version 3.1.0.
 - **API Permissions**:
-  - SharePoint: `Sites.FullControl.All`
-  - Microsoft Graph: `Directory.Read.All`
+  - Application: SharePoint: `Sites.FullControl.All`
+  - Application: Microsoft Graph: `Directory.Read.All`
 - An app registration in Azure AD with the necessary permissions.
 
 ## Parameters
