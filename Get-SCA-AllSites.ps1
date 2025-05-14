@@ -28,10 +28,15 @@
     The tenant ID for the Microsoft 365 tenant.
 
 .NOTES
-    File Name      : Get-SCA-AllSites.ps1
-    Prerequisite   : PnP PowerShell module installed (Tested with  3.1.0)
-    Author         : Mike Lee | Vijay Kumar
-    Date           : 5/14/2025
+    File Name     : Get-SCA-AllSites.ps1
+    
+    Prerequisite  : PnP PowerShell module installed (Tested with  3.1.0)
+                  : API Perms:  
+                      Application: Sharepoint: Sites.FullControl.All
+                      Application: Graph: Directory.Read.All
+    
+    Author        : Mike Lee | Vijay Kumar
+    Date          : 5/14/2025
 
 .EXAMPLE
     .\Get-SCA-AllSites.ps1
