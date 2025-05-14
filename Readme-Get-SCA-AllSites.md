@@ -54,7 +54,10 @@
 .\Get-SCA-AllSites.ps1
 ```
 
-This command retrieves all SCAs and exports them to a CSV file in the `%TEMP%` folder.
+## Example Output:
+
+![image](https://github.com/user-attachments/assets/252871dd-9bb4-44af-bd83-ec10c0db3ea9)
+
 
 ## Notes
 
