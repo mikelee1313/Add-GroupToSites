@@ -1,7 +1,3 @@
-Here's a README tailored for the `Get-SCA-AllSites.ps1` script:
-
----
-
 # Get-SCA-AllSites.ps1
 
 `Get-SCA-AllSites.ps1` is a PowerShell script designed to retrieve a list of all site collection administrators (SCAs) across all SharePoint sites within your Microsoft 365 tenant. This script is part of the `Add-GroupToSites` repository, which focuses on managing and automating administrative tasks for SharePoint Online.
