@@ -31,7 +31,7 @@
     File Name     : Get-SCA-AllSites.ps1
     
     Prerequisite  : PnP PowerShell module installed (Tested with  3.1.0)
-                  : API Perms:  
+                  : API Perms:
                       Application: Sharepoint: Sites.FullControl.All
                       Application: Graph: Directory.Read.All
     
