@@ -250,7 +250,7 @@ foreach ($site in $sites) {
                         # Check if this group should be ignored
                         if (Test-IgnoreGroup -groupId $entraGroupId) {
                             Write-Log "Skipping ignored Entra Group '$($admin.Title)' with ID: $entraGroupId" -level "DEBUG" #-ForceLog
-                            $siteData.EntraGroupAdmins += "$($admin.Title): [Group excluded from processing]"
+                            $siteData.EntraGroupAdmins += "$($admin.Title): [Excluded]"
                             continue
                         }
                     
