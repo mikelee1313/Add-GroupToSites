@@ -92,7 +92,7 @@ function Invoke-Sites {
     param (
         [string]$groupname
     )
-    $Sites = Get-PnPTenantSite -IncludeOneDriveSites -Filter "Url -notlike '-my.sharepoint.com'"
+    $Sites = Get-PnPTenantSite -Filter "Url -notlike '-my.sharepoint.com'"
     foreach ($Site in $Sites) {
         Connect-PnPOnline -Url $Site.Url -ApplicationId $appID -Tenant $tenant -Thumbprint $thumbprint
         Write-LogMessage "Processing Site Collection: $($Site.URL)" "INFO"
