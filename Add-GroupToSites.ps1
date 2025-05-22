@@ -25,7 +25,7 @@
 .NOTES
     File Name      : Add-GroupToSites.ps1
     Author         : Mike Lee / Vijay Kumar / Darin Roulston
-    Created On     : 3/11/25
+    Created On     : 5/22/25
 
 .EXAMPLE
     .\Add-GroupToSites.ps1
@@ -92,16 +92,22 @@ function Invoke-Sites {
     param (
         [string]$groupname
     )
-    $Sites = Get-PnPTenantSite -Filter "Url -notlike '-my.sharepoint.com'"
+    $Sites = Get-PnPTenantSite -Filter "Url -notlike '*-my.sharepoint.com*' -and Url -notlike '*sharepoint.com/portals*'"
     foreach ($Site in $Sites) {
-        Connect-PnPOnline -Url $Site.Url -ApplicationId $appID -Tenant $tenant -Thumbprint $thumbprint
-        Write-LogMessage "Processing Site Collection: $($Site.URL)" "INFO"
-        if (-not (Test-SiteCollectionAdminExists -groupname $groupname)) {
-            Write-LogMessage "Adding Site Collection Admin for: $($Site.URL)" "ADDED"
-            Set-PnPTenantSite -Url $Site.Url -Owners $groupname
-            Write-LogMessage "Successfully added Site Collection Admin for: $($Site.URL)" "INFO"
-        } else {
-            Write-LogMessage "Group already exists as Site Collection Admin for: $($Site.URL)" "PRESENT"
+        try {
+            Connect-PnPOnline -Url $Site.Url -ApplicationId $appID -Tenant $tenant -Thumbprint $thumbprint
+            Write-LogMessage "Processing Site Collection: $($Site.URL)" "INFO"
+            if (-not (Test-SiteCollectionAdminExists -groupname $groupname)) {
+                Write-LogMessage "Adding Site Collection Admin for: $($Site.URL)" "ADDED"
+                Set-PnPTenantSite -Url $Site.Url -Owners $groupname
+                Write-LogMessage "Successfully added Site Collection Admin for: $($Site.URL)" "INFO"
+            } else {
+                Write-LogMessage "Group already exists as Site Collection Admin for: $($Site.URL)" "PRESENT"
+            }
+        } catch {
+            Write-LogMessage "Error accessing site $($Site.URL): $_" "ERROR"
+            Write-LogMessage "Continuing with next site..." "INFO"
+            continue
         }
     }
 }
