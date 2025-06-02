@@ -33,12 +33,20 @@
 .OUTPUTS
     Log file at $env:TEMP\Adding_Group_to_Sites_[timestamp].txt with information about the operations performed.
 #>
-# Variables for processing
-$AdminURL = "" #Example:"https://contoso-admin.sharepoint.com/"
-$groupname = "" #Example:"c:0t.c|tenant|ed046cb9-86bc-47e7-95f5-912cfe343fc2"
-$appID = "" #Example: "1e488dc4-1977-48ef-8d4d-9856f4e04536"
-$thumbprint = "" #Example: "5EAD7303A5C7E27DB4245878AD554642940BA082"
-$tenant = "" #Example: "9cfc42cb-51da-4055-87e9-b20a170b6ba3"
+
+#########################################################################
+# USER CONFIGURATION - MODIFY THESE SETTINGS BEFORE RUNNING THE SCRIPT
+#########################################################################
+
+$AdminURL = "https://M365CPI13246019-admin.sharepoint.com" 
+$groupname = "c:0t.c|tenant|ed046cb9-86bc-47e7-95f5-912cfe343fc2"
+$appID = "1e488dc4-1977-48ef-8d4d-9856f4e04536"
+$thumbprint = "5EAD7303A5C7E27DB4245878AD554642940BA082" 
+$tenant = "9cfc42cb-51da-4055-87e9-b20a170b6ba3"
+
+#########################################################################
+# END OF USER CONFIGURATION
+#########################################################################
 
 $startime = Get-Date -Format "yyyyMMdd_HHmmss"
 $logFilePath = "$env:TEMP\Adding_Group_to_Sites_$startime.txt"
