@@ -23,12 +23,12 @@
     The tenant ID (GUID) of the Microsoft 365 tenant.
 
 .NOTES
-    File Name      : Add-GroupToSites.ps1
+    File Name      : Add-GroupToSPOSites.ps1
     Author         : Mike Lee / Vijay Kumar / Darin Roulston
     Created On     : 5/22/25
 
 .EXAMPLE
-    .\Add-GroupToSites.ps1
+    .\Add-GroupToSPOSites.ps1
 
 .OUTPUTS
     Log file at $env:TEMP\Adding_Group_to_Sites_[timestamp].txt with information about the operations performed.
