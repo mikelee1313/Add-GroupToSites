@@ -71,7 +71,7 @@
 
 .NOTES
     File Name      : Groupify-SPOSites.ps1
-    Author         : Mike Lee
+    Author         : Mike Lee / Tania Menice
     Date           : 9/29/2025
     Prerequisite   : PnP.PowerShell module (minimum version 2.0.0)
     
