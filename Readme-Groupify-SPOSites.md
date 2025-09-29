@@ -81,6 +81,7 @@ $tenantAdminUrl = "https://yourtenant-admin.sharepoint.com"
 
 # Groupify configuration
 $enableGroupify = $false                                  # Set to $true to perform actual groupification
+$groupifyDisplayNameSuffix = " Group"                     # Suffix to add to site title for group display nam
 $groupifyMaxSites = 5                                     # Safety limit for number of sites per run
 $groupifyIsPublic = $false                                # Create private groups by default
 $groupifyKeepOldHomePage = $false                         # Use new group home page
